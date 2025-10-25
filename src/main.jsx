@@ -1,23 +1,13 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom'
-import Home from './pages/Home.jsx'
-import Signup from './pages/auth/Signup.jsx'
-import Login from './pages/auth/Login.jsx'
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import {
+  RouterProvider,
+} from "react-router-dom";
+import {AuthProvider} from "./context/AuthProvider.jsx";
+import AppRouter from "./routes/routes.jsx";
 
-const router = createBrowserRouter(
-  createRoutesFromElements(
-    <Route path='/' element={<App />}>
-      <Route path='' element={<Home />} />
-      <Route path='/signup' element={<Signup />} />
-      <Route path='/login' element={<Login />} />
-      {/* <Route path='details/:id' element={<JobDetails />} />
-      <Route path='saved-job' element={<SavedJob />} /> */}
-    </Route>
-  )
-)
-
-createRoot(document.getElementById('root')).render(
-  <RouterProvider router={router} />
-)
+createRoot(document.getElementById("root")).render(
+  <AuthProvider>
+    <RouterProvider router={AppRouter} />
+  </AuthProvider>
+);
