@@ -15,7 +15,7 @@ const useAuthStore = create((set) => ({
       const res = await authService.getProfile();
       console.log("Checking auth", res);
 
-      set({authUser: res.user});
+      set({ authUser: res.user });
     } catch (error) {
       console.log("Error checking auth: ", error);
       set({ authUser: null });
