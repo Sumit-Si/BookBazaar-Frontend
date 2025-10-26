@@ -7,20 +7,19 @@ import { useContext } from "react";
 const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
-  //   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+    const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
 
-  //   useEffect(() => {
-  //     checkAuth();
-  //   }, [checkAuth]);
+    useEffect(() => {
+      checkAuth();
+    }, [checkAuth]);
 
-  //   if (isCheckingAuth && !authUser) {
-  //     return (
-  //       <div className="flex items-center justify-center h-screen">
-  //         <Loader className="" />
-  //       </div>
-  //     );
-  //   }
-  const authUser = null;
+    if (isCheckingAuth && !authUser) {
+      return (
+        <div className="flex items-center justify-center h-screen">
+          <Loader className="size-10 animate-spin" />
+        </div>
+      );
+    }
   return (
     <AuthContext.Provider value={{ authUser }}>
       {children}

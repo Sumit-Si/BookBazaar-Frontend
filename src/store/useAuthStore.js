@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import authService from "../api/authService";
+import toast from "react-hot-toast";
 
 const useAuthStore = create((set) => ({
   authUser: null,
@@ -14,7 +15,7 @@ const useAuthStore = create((set) => ({
       const res = await authService.getProfile();
       console.log("Checking auth", res);
 
-      // set({authUser: res.user});
+      set({authUser: res.user});
     } catch (error) {
       console.log("Error checking auth: ", error);
       set({ authUser: null });
@@ -41,9 +42,14 @@ const useAuthStore = create((set) => ({
     set({ isLoggingIn: true });
     try {
       const res = await authService.login(credientials);
-      //   set({authUser: res.user});
+      console.log("Login res: ", res);
+      set({ authUser: res.data?.user });
+      toast.success("Login successfully");
     } catch (error) {
       console.log("Error logging in: ", error);
+      toast.error(
+        error?.response?.data?.error || error?.response?.data?.message
+      );
     } finally {
       set({ isLoggingIn: false });
     }
@@ -53,9 +59,9 @@ const useAuthStore = create((set) => ({
     try {
       await authService.logout();
       set({ authUser: null });
+      toast.success("Logout successfully");
     } catch (error) {
-        console.log("Error logging out: ",error);
-        
+      console.log("Error logging out: ", error);
     }
   },
 }));
