@@ -8,6 +8,7 @@ import { EyeOff } from "lucide-react";
 import { Eye } from "lucide-react";
 import useAuthStore from "../../store/useAuthStore.js";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 const signUpSchema = z.object({
   username: z
@@ -28,15 +29,28 @@ const signUpSchema = z.object({
     .min(8, "Password must be at least 8 characters")
     .max(20, "Password must be at most 20 characters"),
   role: z.enum(AvailableUserRoles).default("user"),
-  // avatar: z
-  //   // .object({
-  //   //   file: z.instanceof(File),
-  //   // })
-  //   .optional(),
+  avatar: z
+    .any()
+    .refine(
+      (files) => files instanceof FileList && files.length > 0,
+      "File is required"
+    )
+    .refine(
+      (files) => files[0]?.size <= 5 * 1024 * 1024,
+      "Max file size is 5MB"
+    )
+    .refine(
+      (files) =>
+        ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(
+          files[0]?.type
+        ),
+      "Only .jpeg, .jpg, .png, .webp files are allowed"
+    ),
 });
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [previewAvatar, setPreviewAvatar] = useState(null);
 
   const { signup, isSignInUp } = useAuthStore();
 
@@ -44,6 +58,8 @@ const Signup = () => {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
+    reset,
   } = useForm({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -51,13 +67,38 @@ const Signup = () => {
     },
   });
 
+  const avatar = watch("avatar");
+  console.log("avatar", avatar);
+
+  useEffect(() => {
+    if (avatar && avatar.length > 0) {
+      const avatarFile = avatar[0];
+      const avatarURL = URL.createObjectURL(avatarFile);
+      setPreviewAvatar(avatarURL);
+
+      return () => URL.revokeObjectURL(avatarURL);
+    }
+    setPreviewAvatar(null);
+  }, [avatar]);
+
   const onSubmit = async (userData) => {
     console.log("data", userData);
+    const formData = new FormData();
+    formData.append("username", userData.username);
+    formData.append("fullName", userData.fullName);
+    formData.append("email", userData.email);
+    formData.append("password", userData.password);
+    formData.append("role", userData.role);
+    formData.append("avatar", userData.avatar[0]);
+    console.log("formData", formData);
+
     try {
-      await signup(userData);
+      await signup(formData);
     } catch (error) {
       console.log("Sign up error: ", error);
     }
+
+    reset();
   };
 
   return (
@@ -219,32 +260,33 @@ const Signup = () => {
             <div className="flex flex-col md:order-2 order-1 items-center justify-center space-y-4">
               <div className="w-36 h-36 bg-base-100 rounded-full flex items-center justify-center">
                 {/* Avatar Preview (Placeholder or uploaded image) */}
-                {/* {formData.avatar ? ( */}
-                {/* <img
-                //   src={URL.createObjectURL(formData.avatar)}
-                alt="Avatar"
-                className="w-36 h-36 rounded-full object-cover"
-              />
-              ) : (<span className="text-gray-500">Upload Avatar</span>
-              )} */}
+                {previewAvatar ? (
+                  <img
+                    src={previewAvatar}
+                    alt="Avatar Preview"
+                    className="w-36 h-36 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-gray-500">Upload Avatar</span>
+                )}
               </div>
 
               <div className="relative">
                 <input
                   type="file"
                   id="avatar"
-                  // {...register("avatar")}
+                  {...register("avatar")}
                   className={`input input-bordered w-full ${
                     errors.avatar ? "input-error" : ""
                   }`}
-                  accept="image/*"
+                  // accept="image/*"
                 />
               </div>
-              {/* {errors.avatar && (
+              {errors.avatar && (
                 <p className="text-red-500 text-xs mt-1">
                   {errors.avatar.message}
                 </p>
-              )} */}
+              )}
             </div>
           </div>
           <div className="text-center flex flex-col items-center mt-4 gap-2">
@@ -257,7 +299,7 @@ const Signup = () => {
               {isSignInUp ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="ml-2">Signing up...</span>
+                  <span className="ml-2">Loading...</span>
                 </>
               ) : (
                 "Signup"

@@ -11,6 +11,8 @@ import Login from "../pages/auth/Login.jsx";
 import ErrorPage from "../pages/error/ErrorPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicRoute from "./PublicRoute.jsx";
+import Profile from "../pages/Profile.jsx";
+import Setting from "../pages/Setting.jsx";
 
 const AppRouter = createBrowserRouter(
   createRoutesFromElements(
@@ -37,6 +39,22 @@ const AppRouter = createBrowserRouter(
           <PublicRoute>
             <Login />
           </PublicRoute>
+        }
+      />
+      <Route
+        path="/me"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Setting />
+          </ProtectedRoute>
         }
       />
     </Route>
