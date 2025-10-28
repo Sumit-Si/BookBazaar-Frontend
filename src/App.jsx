@@ -6,7 +6,7 @@ import Container from "./components/Container/Container";
 
 function App() {
   return (
-    <div className="w-full min-h-screen relative border">
+    <div className="w-full min-h-screen relative">
       <Container>
         <Header />
         <Outlet />

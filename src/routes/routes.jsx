@@ -13,6 +13,7 @@ import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicRoute from "./PublicRoute.jsx";
 import Profile from "../pages/Profile.jsx";
 import Setting from "../pages/Setting.jsx";
+import BooksPage from "../pages/books/BooksPage.jsx";
 
 const AppRouter = createBrowserRouter(
   createRoutesFromElements(
@@ -54,6 +55,14 @@ const AppRouter = createBrowserRouter(
         element={
           <ProtectedRoute>
             <Setting />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/books"
+        element={
+          <ProtectedRoute>
+            <BooksPage />
           </ProtectedRoute>
         }
       />
