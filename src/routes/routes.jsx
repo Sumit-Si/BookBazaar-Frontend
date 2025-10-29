@@ -5,15 +5,9 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 import App from "../App.jsx";
-import Home from "../pages/Home.jsx";
-import Signup from "../pages/auth/Signup.jsx";
-import Login from "../pages/auth/Login.jsx";
-import ErrorPage from "../pages/error/ErrorPage.jsx";
+import {Home,Signup,Login,ErrorPage,Profile,Setting,BooksPage,Book} from "../pages";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicRoute from "./PublicRoute.jsx";
-import Profile from "../pages/Profile.jsx";
-import Setting from "../pages/Setting.jsx";
-import BooksPage from "../pages/books/BooksPage.jsx";
 
 const AppRouter = createBrowserRouter(
   createRoutesFromElements(
@@ -63,6 +57,14 @@ const AppRouter = createBrowserRouter(
         element={
           <ProtectedRoute>
             <BooksPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={"/books/:bookId"}
+        element={
+          <ProtectedRoute>
+            <Book />
           </ProtectedRoute>
         }
       />

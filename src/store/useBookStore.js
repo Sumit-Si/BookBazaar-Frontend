@@ -31,14 +31,34 @@ const useBookStore = create((set) => ({
 
     try {
       const res = await bookService.getBooks();
-      console.log("books res", res?.data?.books);
-      set({ books: res?.data?.books });
+      console.log("books res", res?.books);
+      set({ books: res?.books || [] });
     } catch (error) {
       console.log("Error while fetching books", error);
+    //   const errorMessage =
+    //     error?.response?.data?.message ||
+    //     error?.message ||
+    //     "Failed to fetch books";
+    //   set({ error: errorMessage });
+    //   toast.error(errorMessage);
     } finally {
       set({ isBookLoading: false });
     }
   },
+
+  getBookById: async (bookId) => {
+    set({ isBookLoading: true });
+
+    try {
+        const res = await bookService.getBookById(bookId);
+        console.log("book res", res);
+        set({book: res?.book || {}});
+    } catch (error) {
+        console.log("Error while fetching book by id",error);
+        
+    }
+  },
+
   updateBook: async (bookId, bookData) => {
     set({ isBookUpdating: true });
 

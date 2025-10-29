@@ -2,36 +2,37 @@ import { useState } from "react";
 import Container from "../../components/Container/Container";
 import useBookStore from "../../store/useBookStore.js";
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 const BooksPage = () => {
   const [search, setSearch] = useState("");
 
-  const {books,isBookLoading,getBooks} = useBookStore();
+  const { books, isBookLoading, getBooks } = useBookStore();
+
 
   useEffect(() => {
-    console.log("Books",books);
-    
+    console.log("Books", books);
     try {
-        getBooks();
+      getBooks();
     } catch (error) {
-        console.log("Error on get books",error);
-        
+      console.log("Error while fetching books", error);
     }
-  },[])
+    
+  }, []);
 
-  if(isBookLoading) {
+  if (isBookLoading) {
     return (
-        <div className="flex justify-center py-20">
-            <span className="loading loading-spinner text-primary"></span>
-        </div>
-    )
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <Container>
       <div className="min-h-screen bg-base-100 text-base-content">
-        {/* PAGE HEADER */}
-        <header className="px-6 py-12 text-center">
+        <div className="px-6 py-12 text-center">
           <h1 className="text-3xl font-bold mb-4 text-primary">
             Our Collection
           </h1>
@@ -49,52 +50,63 @@ const BooksPage = () => {
               className="input input-bordered w-full max-w-md"
             />
           </div>
-        </header>
+        </div>
 
-        {/* MAIN CONTENT */}
-        <main className="px-6 pb-20">
+        <div className="px-6 pb-20">
           {books.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">No books found.</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {books?.map((book) => (
-              <div
-                key={book._id}
-                className="card bg-base-100 shadow-sm hover:shadow-md transition p-4"
-              >
-                <figure className="h-48 bg-gray-100 rounded-lg mb-4 overflow-hidden">
-                  <img
-                    src={book.coverUrl || "/placeholder-book.png"}
-                    alt={book.title}
-                    className="object-cover w-full h-full"
-                  />
-                </figure>
-                <div className="flex flex-col justify-between h-32">
-                  <div>
-                    <h3 className="font-semibold text-lg line-clamp-1">
-                      {book.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 line-clamp-1">
-                      {book.author || "Unknown Author"}
-                    </p>
+            <div className="text-center py-20 text-gray-500">
+              No books found.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.isArray(books) &&
+                books?.map((book) => (
+                  <div
+                    key={book._id}
+                    className="card bg-base-200 ring ring-secondary/20 shadow-sm hover:shadow-lg hover:shadow-secondary/40 transition duration-200 hover:-translate-y-1 p-4"
+                  >
+                    <figure className="max-h-48 h-48 bg-base-300 rounded-lg mb-4 overflow-hidden">
+                      <img
+                        src={book?.coverImage || "/placeholder-book.png"}
+                        alt={book?.title}
+                        className="object-cover w-full h-full"
+                      />
+                    </figure>
+                    <div className="flex flex-col gap-2 justify-between max-h-48 h-48">
+                      <div>
+                        <h5 className="bg-secondary/10 mb-2 text-primary ring ring-primary/30 shadow-sm shadow-primary/80 rounded-lg text-xs w-fit p-2">{book?.genre || "Unknown Category"}</h5>
+                        <h3 className="font-semibold text-lg line-clamp-1">
+                          {book?.title}
+                        </h3>
+                        <p className="text-sm text-base-content/90 line-clamp-1">
+                          by{" "}
+                          <span className="text-secondary capitalize">
+                            {book?.author?.fullName || "Unknown Author"}
+                          </span>
+                        </p>
+                      </div>
+                      <div className="">
+                        <p className="text-sm text-base-content/80 line-clamp-2">
+                          {book?.description}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-emerald-500 font-semibold">
+                          ₹{book.price?.toFixed(2) || "—"}
+                        </span>
+                        <Link
+                            to={`/books/${book?._id}`}
+                          className="btn btn-sm btn-outline"
+                        >
+                          View Details
+                        </Link>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-primary font-semibold">
-                      ₹{book.price?.toFixed(2) || "—"}
-                    </span>
-                    <a
-                      href={`/books/${book._id}`}
-                      className="btn btn-sm btn-outline"
-                    >
-                      View Details
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        </main>
+                ))}
+            </div>
+          )}
+        </div>
       </div>
     </Container>
   );
