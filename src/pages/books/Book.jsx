@@ -3,6 +3,20 @@ import { useNavigate, useParams } from "react-router-dom";
 import useBookStore from "../../store/useBookStore.js";
 import Container from "../../components/Container/Container.jsx";
 import { ArrowLeftIcon } from "lucide-react";
+import { useState } from "react";
+import { create } from "zustand";
+import useReviewStore from "../../store/useReviewStore.js";
+import z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const reviewSchema = z.object({
+  review: z.number().min(1, "Please select a rating between 1 and 5."),
+  comment: z
+    .string()
+    .min(10, "Comment must be at least 5 characters")
+    .max(500, "Comment must be at most 500 characters"),
+});
 
 const Book = () => {
   const navigate = useNavigate();
@@ -10,6 +24,21 @@ const Book = () => {
   console.log("id", bookId);
 
   const { book, books, getBooks, getBookById } = useBookStore();
+  const { reviews, addReview } = useReviewStore();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm({
+    resolver: zodResolver(reviewSchema),
+    defaultValues: {
+      rating: 0,
+      comment: "",
+    },
+  });
 
   useEffect(() => {
     try {
@@ -18,35 +47,94 @@ const Book = () => {
       console.log("BookById error : ", error);
     }
   }, []);
+
+  const avgRating = () => {
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+    return (total / reviews.length).toFixed(1);
+  };
+
+  const rating = watch("rating");
+
+  const onSubmit = async (data) => {
+    console.log("data", data);
+    // try {
+    //   await addReview(data);
+    // } catch (error) {
+    //   console.log("Error on adding review: ",error);
+      
+    // }
+  };
+
   return (
     <Container>
       <div className="min-h-screen bg-base-100 text-base-content">
+        {/* BACK BUTTON */}
         <div className="px-6 py-10">
-          <button type="button" onClick={() => navigate(-1)} className="bg-base-300 py-2 px-4 rounded-full shadow-md shadow-secondary/20 flex items-center gap-0.5 hover:text-secondary hover:shadow-lg transition duration-200 btn btn-outline btn-secondary"><ArrowLeftIcon /> Back</button>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="bg-base-300 py-2 px-4 rounded-full shadow-md shadow-secondary/20 flex items-center gap-0.5 hover:text-secondary hover:shadow-lg transition duration-200 btn btn-outline btn-secondary"
+          >
+            <ArrowLeftIcon className="h-4 w-4" /> Back
+          </button>
         </div>
-        <div className="px-6 pb-20 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-          {/* LEFT: COVER IMAGE */}
-          <div className="flex w-full justify-start">
+
+        {/* MAIN GRID */}
+        <div className="px-6 pb-20 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+          {/* LEFT: FIXED COVER IMAGE */}
+          <div className="col-span-1 md:sticky md:top-20 self-start">
             <img
               src={book?.coverImage || "/placeholder-book.png"}
               alt={book?.title}
-              className="rounded-xl w-11/12 shadow-md object-cover"
+              className="rounded-xl w-full shadow-md object-cover"
             />
           </div>
 
-          {/* RIGHT: BOOK INFO */}
-          <div>
+          {/* RIGHT: BOOK INFO + REVIEWS */}
+          <div className="col-span-2 overflow-y-auto pr-3">
             <h2 className="text-3xl font-bold mb-2">{book?.title}</h2>
-            <p className="text-gray-500 mb-6">
-              by{" "}
-              <span className="font-medium text-gray-700">
-                {book?.author?.fullName || "Unknown Author"}
-              </span>
+            <div className="text-primary mb-4 capitalize flex gap-2 items-center">
+              {book?.author?.avatar?.url && (
+                <img
+                  src={book?.author?.avatar?.url}
+                  alt="author image"
+                  className="object-cover h-8 w-8 rounded-full"
+                />
+              )}
+              {book?.author?.fullName || "Unknown Author"}
+            </div>
+
+            {/* RATING SECTION */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="rating rating-sm">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <input
+                    key={num}
+                    type="radio"
+                    name="rating-display"
+                    className="mask mask-star-2 bg-orange-400"
+                    checked={num === Math.round(book?.avgRating || 0)}
+                    readOnly
+                  />
+                ))}
+              </div>
+              <p className="text-sm text-base-content/80">
+                {book?.avgRating ? book.avgRating.toFixed(1) : "No rating yet"}
+              </p>
+            </div>
+
+            <p className="text-base leading-relaxed mb-4">
+              {book?.description}
             </p>
 
-            <div className="space-y-2 text-sm text-gray-600 mb-6">
+            {/* BOOK DETAILS */}
+            <div className="space-y-2 text-sm text-base-content/70 mb-6">
               <p>
-                <span className="font-semibold">Genre:</span> {book?.genre}
+                <span className="font-semibold">Genre:</span>{" "}
+                <span className="uppercase text-secondary ring ring-secondary rounded-full py-1 px-2 tracking-wider text-xs">
+                  {book?.genre}
+                </span>
               </p>
               <p>
                 <span className="font-semibold">Publisher:</span>{" "}
@@ -54,10 +142,11 @@ const Book = () => {
               </p>
               <p>
                 <span className="font-semibold">Published Date:</span>{" "}
-                {new Date(book?.publishedDate).toDateString()}
+                {new Date(book?.publishedDate).toLocaleDateString()}
               </p>
               <p>
-                <span className="font-semibold">ISBN:</span> {book?.ISBN}
+                <span className="font-semibold">ISBN:</span>{" "}
+                <span className="underline">{book?.ISBN}</span>
               </p>
               <p>
                 <span className="font-semibold">In Stock:</span>{" "}
@@ -68,19 +157,14 @@ const Book = () => {
                       : "text-error font-medium"
                   }
                 >
-                  {book?.stock > 0
-                    ? `${book?.stock} available`
-                    : "Out of Stock"}
+                  {book?.stock > 0 ? `${book.stock} available` : "Out of Stock"}
                 </span>
               </p>
             </div>
 
-            <p className="text-base leading-relaxed mb-8">
-              {book?.description}
-            </p>
-
-            <div className="flex items-center justify-between">
-              <div className="text-3xl font-bold text-primary">
+            {/* PRICE AND ACTIONS */}
+            <div className="flex flex-col gap-5 mb-10">
+              <div className="text-2xl font-bold text-emerald-500">
                 ₹{book?.price}
               </div>
               <div className="flex gap-3">
@@ -91,6 +175,134 @@ const Book = () => {
                   Buy Now
                 </button>
               </div>
+            </div>
+
+            {/* REVIEWS SECTION */}
+            <div className="mt-10 py-2">
+              <h3 className="text-2xl font-bold mb-6">Customer Reviews</h3>
+
+              {/* Rating distribution */}
+              <div className="space-y-2">
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <div key={rating} className="flex items-center gap-3">
+                    <span className="w-6 text-right font-medium">{rating}</span>
+                    <div className="flex-1 bg-base-300 rounded-full h-2">
+                      <div
+                        className="bg-warning h-2 rounded-full"
+                        style={
+                          {
+                            // width: `${ratingStats.percentages[rating] || 0}%`,
+                          }
+                        }
+                      ></div>
+                    </div>
+                    <span className="w-8 text-base-content/80 text-right">
+                      {/* {ratingStats.counts[rating]} */}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* REVIEW FORM */}
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="bg-base-200 p-6 rounded-lg mb-10 space-y-4"
+              >
+                <h4 className="font-semibold text-lg">Write a Review</h4>
+                <div>
+                  <div className="rating rating-md">
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <input
+                        key={num}
+                        type="radio"
+                        {...register("rating", { valueAsNumber: true })}
+                        className={`mask mask-star-2  ${
+                          errors.rating ? "bg-red-400" : "bg-orange-400"
+                        }`}
+                        value={num}
+                        checked={rating === num}
+                        onChange={() =>
+                          setValue("rating", num, { shouldValidate: true })
+                        }
+                      />
+                    ))}
+                  </div>
+                  {errors.rating && (
+                    <p className="text-error">{errors?.rating.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <textarea
+                    className={`textarea textarea-bordered w-full ${
+                      errors.comment ? "textarea-error" : ""
+                    }`}
+                    placeholder="Share your thoughts about this book..."
+                    {...register("comment")}
+                    // value={reviewText}
+                    // onChange={(e) => setReviewText(e.target.value)}
+                  ></textarea>
+                  {errors.comment && (
+                    <p className="text-error">{errors?.comment.message}</p>
+                  )}
+                </div>
+
+                <button type="submit" className="btn btn-primary">
+                  Submit Review
+                </button>
+              </form>
+
+              {/* REVIEW LIST */}
+              {reviews.length === 0 ? (
+                <p className="text-base-content/80 space-y-3 px-2 text-center bg-base-200 py-5 rounded-lg">
+                  No reviews yet. Be the first to review this book!
+                </p>
+              ) : (
+                <div className="space-y-3 px-2">
+                  {reviews.map((rev) => (
+                    <div
+                      key={rev._id}
+                      className="p-4 bg-base-200 rounded-lg ring ring-secondary/30"
+                    >
+                      <div className="flex gap-2 items-start mb-1">
+                        <div className="flex flex-1/4 flex-col gap-1">
+                          <div className="avatar">
+                            <div className="w-12 rounded-full">
+                              <img src="/images/stock/photo-1534528741775-53994a69daeb.jpg" />
+                            </div>
+                          </div>
+                          <p className="font-semibold text-sm">
+                            {rev.user?.name || "Anonymous"}
+                          </p>
+                        </div>
+
+                        <div className="flex-3/4">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs text-gray-400 mt-1">
+                              {new Date(rev.createdAt).toLocaleDateString()}
+                            </p>
+                            <div className="rating rating-xs">
+                              {[1, 2, 3, 4, 5].map((num) => (
+                                <input
+                                  key={num}
+                                  type="radio"
+                                  name={`rating-${rev._id}`}
+                                  className="mask mask-star-2 bg-orange-400"
+                                  checked={num === rev.rating}
+                                  readOnly
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-base-content text-sm">
+                            {rev.comment}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
