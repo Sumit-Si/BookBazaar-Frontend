@@ -9,9 +9,11 @@ import useReviewStore from "../../store/useReviewStore.js";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import calculateRatingStats from "../../utils/CalculateRatingStats.js";
 
 const reviewSchema = z.object({
-  review: z.number().min(1, "Please select a rating between 1 and 5."),
+  rating: z.coerce.number().min(1, "Please select a rating between 1 and 5."),
   comment: z
     .string()
     .min(10, "Comment must be at least 5 characters")
@@ -24,7 +26,11 @@ const Book = () => {
   console.log("id", bookId);
 
   const { book, books, getBooks, getBookById } = useBookStore();
-  const { reviews, addReview } = useReviewStore();
+  const { reviews, addReview, getReviews, isReviewCreating } = useReviewStore();
+  console.log("reviews", reviews);
+
+  const ratingStats = calculateRatingStats(reviews);
+  console.log("Rating stats: ", ratingStats);
 
   const {
     register,
@@ -32,10 +38,11 @@ const Book = () => {
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm({
     resolver: zodResolver(reviewSchema),
     defaultValues: {
-      rating: 0,
+      rating: 1,
       comment: "",
     },
   });
@@ -48,22 +55,27 @@ const Book = () => {
     }
   }, []);
 
-  const avgRating = () => {
-    if (reviews.length === 0) return 0;
-    const total = reviews.reduce((sum, r) => sum + r.rating, 0);
-    return (total / reviews.length).toFixed(1);
-  };
+  useEffect(() => {
+    try {
+      const result = getReviews(bookId);
+      console.log("result: ", result);
+    } catch (error) {
+      console.log("Reviews error : ", error);
+    }
+  }, []);
 
   const rating = watch("rating");
 
   const onSubmit = async (data) => {
+    console.log("Form submitted!");
+
     console.log("data", data);
-    // try {
-    //   await addReview(data);
-    // } catch (error) {
-    //   console.log("Error on adding review: ",error);
-      
-    // }
+    try {
+      await addReview(bookId, data);
+      reset();
+    } catch (error) {
+      console.log("Error on adding review: ", error);
+    }
   };
 
   return (
@@ -182,25 +194,58 @@ const Book = () => {
               <h3 className="text-2xl font-bold mb-6">Customer Reviews</h3>
 
               {/* Rating distribution */}
-              <div className="space-y-2">
-                {[5, 4, 3, 2, 1].map((rating) => (
-                  <div key={rating} className="flex items-center gap-3">
-                    <span className="w-6 text-right font-medium">{rating}</span>
-                    <div className="flex-1 bg-base-300 rounded-full h-2">
-                      <div
-                        className="bg-warning h-2 rounded-full"
-                        style={
-                          {
-                            // width: `${ratingStats.percentages[rating] || 0}%`,
-                          }
-                        }
-                      ></div>
-                    </div>
-                    <span className="w-8 text-base-content/80 text-right">
-                      {/* {ratingStats.counts[rating]} */}
-                    </span>
+              <div className="grid md:grid-cols-[200px_1fr] gap-6 mb-10">
+                {/* Average Rating */}
+                <div className="text-center md:border-r border-base-300 pr-6">
+                  <div className="text-5xl font-bold text-primary mb-2">
+                    {ratingStats.averageRating.toFixed(1)}
                   </div>
-                ))}
+                  <div className="rating rating-sm mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <input
+                        key={star}
+                        type="radio"
+                        className="mask mask-star-2 bg-orange-400"
+                        checked={star <= Math.round(ratingStats.averageRating)}
+                        readOnly
+                        disabled
+                      />
+                    ))}
+                  </div>
+                  <div className="text-sm text-base-content/70">
+                    Based on {ratingStats.totalReviews}{" "}
+                    {ratingStats.totalReviews === 1 ? "review" : "reviews"}
+                  </div>
+                </div>
+
+                {/* Rating Distribution */}
+                <div className="space-y-3">
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <div key={rating} className="flex items-center gap-3">
+                      <div className="flex items-center gap-1 w-12">
+                        <span className="font-medium">{rating}</span>
+                        <svg
+                          className="w-4 h-4 fill-current text-warning"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 bg-base-300 rounded-full h-3 overflow-hidden">
+                        <div
+                          className="bg-warning h-3 rounded-full transition-all duration-500 ease-out"
+                          style={{
+                            width: `${ratingStats.percentages[rating] || 0}%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="w-12 text-base-content/70 text-sm text-right">
+                        {ratingStats.counts[rating]} (
+                        {Math.round(ratingStats.percentages[rating] || 0)}%)
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* REVIEW FORM */}
@@ -227,7 +272,7 @@ const Book = () => {
                       />
                     ))}
                   </div>
-                  {errors.rating && (
+                  {errors?.rating && (
                     <p className="text-error">{errors?.rating.message}</p>
                   )}
                 </div>
@@ -239,16 +284,25 @@ const Book = () => {
                     }`}
                     placeholder="Share your thoughts about this book..."
                     {...register("comment")}
-                    // value={reviewText}
-                    // onChange={(e) => setReviewText(e.target.value)}
                   ></textarea>
-                  {errors.comment && (
+                  {errors?.comment && (
                     <p className="text-error">{errors?.comment.message}</p>
                   )}
                 </div>
 
-                <button type="submit" className="btn btn-primary">
-                  Submit Review
+                <button
+                  disabled={isReviewCreating}
+                  type="submit"
+                  className="btn btn-primary"
+                >
+                  {isReviewCreating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Submit Review"
+                  )}
                 </button>
               </form>
 
@@ -268,11 +322,11 @@ const Book = () => {
                         <div className="flex flex-1/4 flex-col gap-1">
                           <div className="avatar">
                             <div className="w-12 rounded-full">
-                              <img src="/images/stock/photo-1534528741775-53994a69daeb.jpg" />
+                              <img src={rev?.createdBy?.avatar?.url} />
                             </div>
                           </div>
                           <p className="font-semibold text-sm">
-                            {rev.user?.name || "Anonymous"}
+                            {rev?.createdBy?.fullName || "Anonymous"}
                           </p>
                         </div>
 
@@ -288,7 +342,7 @@ const Book = () => {
                                   type="radio"
                                   name={`rating-${rev._id}`}
                                   className="mask mask-star-2 bg-orange-400"
-                                  checked={num === rev.rating}
+                                  checked={num === rev?.rating}
                                   readOnly
                                 />
                               ))}

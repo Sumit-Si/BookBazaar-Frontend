@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import reviewService from "../api/reviewService.js";
+import toast from "react-hot-toast";
 
 const useReviewStore = create((set) => ({
     reviews: [],
@@ -8,28 +9,34 @@ const useReviewStore = create((set) => ({
     isReviewCreating: false,
     isReviewDeleting: false,
 
-    addReview: async (reviewData) => {
+    addReview: async (bookId,reviewData) => {
         try {
             set({ isReviewCreating: true });
-            const res = await reviewService.addReview(reviewData);
+            const res = await reviewService.addReview(bookId,reviewData);
             console.log("Review create res", res);
-            // set({reviews: [...reviews,res]});
+            set((state) => ({
+                reviews: [...state.reviews,res.review],
+            }));
+            toast.success(res?.message);
         } catch (error) {
             console.log("Error while creating review: ",error);
-            
+            toast.error(error?.response?.data?.error || error?.response?.data?.message);
         } finally {
             set({ isReviewCreating: false });
         }
     },
 
-    getReviews: async () => {
+    getReviews: async (bookId) => {
         try {
             set({isReviewLoading: true});
-            const res = await reviewService.getReviews();
+            const res = await reviewService.getReviews(bookId);
             console.log("Review res", res);
+            set({reviews: res?.reviews || []});
+            toast.success(res?.message);
+            return res;
         } catch (error) {
             console.log("Error while fetching reviews: ",error);
-            
+            toast.error(error?.response?.data?.error || error?.response?.data?.message);
         } finally {
             set({isReviewLoading: false});
         }
