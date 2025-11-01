@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import useBookStore from "../../store/useBookStore.js";
 import Container from "../../components/Container/Container.jsx";
 import { ArrowLeftIcon } from "lucide-react";
@@ -11,6 +11,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import calculateRatingStats from "../../utils/CalculateRatingStats.js";
+import useCartStore from "../../store/useCartStore.js";
+import { ArrowRightIcon } from "lucide-react";
 
 const reviewSchema = z.object({
   rating: z.coerce.number().min(1, "Please select a rating between 1 and 5."),
@@ -27,7 +29,9 @@ const Book = () => {
 
   const { book, books, getBooks, getBookById } = useBookStore();
   const { reviews, addReview, getReviews, isReviewCreating } = useReviewStore();
+  const { addToCart, isCartCreating,cart } = useCartStore();
   console.log("reviews", reviews);
+  console.log("book", book);
 
   const ratingStats = calculateRatingStats(reviews);
   console.log("Rating stats: ", ratingStats);
@@ -53,7 +57,7 @@ const Book = () => {
     } catch (error) {
       console.log("BookById error : ", error);
     }
-  }, []);
+  }, [bookId]);
 
   useEffect(() => {
     try {
@@ -62,7 +66,7 @@ const Book = () => {
     } catch (error) {
       console.log("Reviews error : ", error);
     }
-  }, []);
+  }, [bookId]);
 
   const rating = watch("rating");
 
@@ -77,6 +81,21 @@ const Book = () => {
       console.log("Error on adding review: ", error);
     }
   };
+
+  const handleAddToCart = async () => {
+    if (!book?._id) return;
+    try {
+      const cartData = {
+        book: book?._id,
+        quantity: book?.quantity || 1,
+      };
+      await addToCart(cartData);
+    } catch (error) {
+      console.warn("Error while adding to cart: ", error);
+    }
+  };
+
+  const existingCartItem = Array.isArray(cart) && cart.length > 0 ? cart.find((item) => item?.book?._id === bookId) : null;
 
   return (
     <Container>
@@ -126,13 +145,15 @@ const Book = () => {
                     type="radio"
                     name="rating-display"
                     className="mask mask-star-2 bg-orange-400"
-                    checked={num === Math.round(book?.avgRating || 0)}
+                    checked={num === Math.round(ratingStats.averageRating.toFixed(1) || 0)}
                     readOnly
                   />
                 ))}
               </div>
               <p className="text-sm text-base-content/80">
-                {book?.avgRating ? book.avgRating.toFixed(1) : "No rating yet"}
+                {ratingStats.averageRating ? (
+                  <span className="font-semibold">{ratingStats.averageRating.toFixed(1)} - ({ratingStats?.totalReviews > 1 ? `${ratingStats?.totalReviews} Reviews` : `${ratingStats?.totalReviews} Review`})</span>
+                ) : "No rating yet"}
               </p>
             </div>
 
@@ -180,8 +201,23 @@ const Book = () => {
                 ₹{book?.price}
               </div>
               <div className="flex gap-3">
-                <button className="btn btn-primary" disabled={book?.stock <= 0}>
-                  Add to Cart
+                <button
+                  onClick={handleAddToCart}
+                  className={`btn ${existingCartItem ? "btn-secondary" : "btn-primary"}`}
+                  disabled={book?.stock <= 0}
+                >
+                  {existingCartItem ? (
+                    <>
+                      <Link to={`/cart`}>Go to Cart</Link>
+                    </>
+                  ) : isCartCreating ? (
+                    <>
+                      <Loader2 className="w-5 h-5" />
+                      Adding...
+                    </>
+                  ) : (
+                    "Add to Cart"
+                  )}
                 </button>
                 <button className="btn btn-outline" disabled={book?.stock <= 0}>
                   Buy Now

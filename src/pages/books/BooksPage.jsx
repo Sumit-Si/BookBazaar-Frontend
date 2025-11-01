@@ -10,7 +10,6 @@ const BooksPage = () => {
 
   const { books, isBookLoading, getBooks } = useBookStore();
 
-
   useEffect(() => {
     console.log("Books", books);
     try {
@@ -18,7 +17,6 @@ const BooksPage = () => {
     } catch (error) {
       console.log("Error while fetching books", error);
     }
-    
   }, []);
 
   if (isBookLoading) {
@@ -74,7 +72,9 @@ const BooksPage = () => {
                     </figure>
                     <div className="flex flex-col gap-2 justify-between max-h-48 h-48">
                       <div>
-                        <h5 className="bg-secondary/10 mb-2 text-primary ring ring-primary/30 shadow-sm shadow-primary/80 rounded-lg text-xs w-fit p-2">{book?.genre || "Unknown Category"}</h5>
+                        <h5 className="bg-secondary/10 mb-2 text-primary ring ring-primary/30 shadow-sm shadow-primary/80 rounded-lg text-xs w-fit p-2">
+                          {book?.genre || "Unknown Category"}
+                        </h5>
                         <h3 className="font-semibold text-lg line-clamp-1">
                           {book?.title}
                         </h3>
@@ -95,7 +95,7 @@ const BooksPage = () => {
                           ₹{book.price?.toFixed(2) || "—"}
                         </span>
                         <Link
-                            to={`/books/${book?._id}`}
+                          to={`/books/${book?._id}`}
                           className="btn btn-sm btn-outline"
                         >
                           View Details

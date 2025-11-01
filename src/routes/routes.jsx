@@ -5,7 +5,7 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 import App from "../App.jsx";
-import {Home,Signup,Login,ErrorPage,Profile,Setting,BooksPage,Book} from "../pages";
+import {Home,Signup,Login,ErrorPage,Profile,Setting,BooksPage,Book,CartPage} from "../pages";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import PublicRoute from "./PublicRoute.jsx";
 
@@ -65,6 +65,14 @@ const AppRouter = createBrowserRouter(
         element={
           <ProtectedRoute>
             <Book />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={"/cart"}
+        element={
+          <ProtectedRoute>
+            <CartPage />
           </ProtectedRoute>
         }
       />
