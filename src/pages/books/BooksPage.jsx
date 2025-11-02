@@ -1,23 +1,33 @@
 import { useState } from "react";
-import Container from "../../components/Container/Container";
+import Container from "../../components/Container/Container.jsx";
 import useBookStore from "../../store/useBookStore.js";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import BookSearch from "../../components/Book/BookSearch.jsx";
+import Pagination from "../../components/Book/Pagination.jsx";
+import { useCallback } from "react";
 
 const BooksPage = () => {
-  const [search, setSearch] = useState("");
+  const { books, isBookLoading,metadata, getBooks } = useBookStore();
 
-  const { books, isBookLoading, getBooks } = useBookStore();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({});
 
   useEffect(() => {
-    console.log("Books", books);
+    console.log('📊 Metadata:', metadata);
+  }, [metadata]);
+
+  useEffect(() => {
     try {
       getBooks();
     } catch (error) {
-      console.log("Error while fetching books", error);
+      console.log("Error while fetching books: ",error);
+      
     }
-  }, []);
+  },[])
+
+  const handlePageChange = () => {}
 
   if (isBookLoading) {
     return (
@@ -39,15 +49,7 @@ const BooksPage = () => {
             the BookBazaar backend. Discover your next read from a selection
             built by readers, for readers.
           </p>
-          <div className="mt-6 flex justify-center">
-            <input
-              type="text"
-              placeholder="Search for a book..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input input-bordered w-full max-w-md"
-            />
-          </div>
+            <BookSearch onFiltersChange={() => {}} />
         </div>
 
         <div className="px-6 pb-20">
@@ -107,6 +109,8 @@ const BooksPage = () => {
             </div>
           )}
         </div>
+
+        <Pagination metadata={metadata} onPageChange={handlePageChange} />
       </div>
     </Container>
   );

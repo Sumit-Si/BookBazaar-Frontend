@@ -5,15 +5,15 @@ import toast from "react-hot-toast";
 const useBookStore = create((set) => ({
   books: [],
   book: {},
+  metadata: {},
   isBookLoading: false,
   isBookCreating: false,
   isBookUpdating: false,
   isBookDeleting: false,
 
   createBook: async (bookData) => {
-    set({ isBookCreating: true });
-
     try {
+      set({ isBookCreating: true });
       const res = await bookService.createBook(bookData);
       console.log("Book create res", res);
 
@@ -32,15 +32,10 @@ const useBookStore = create((set) => ({
     try {
       const res = await bookService.getBooks();
       console.log("books res", res?.books);
-      set({ books: res?.books || [] });
+      set({ books: res?.books || [], metadata: res?.metadata || {} });
     } catch (error) {
       console.log("Error while fetching books", error);
-    //   const errorMessage =
-    //     error?.response?.data?.message ||
-    //     error?.message ||
-    //     "Failed to fetch books";
-    //   set({ error: errorMessage });
-    //   toast.error(errorMessage);
+      toast.error(error?.response?.data?.error || error?.response?.data?.message);
     } finally {
       set({ isBookLoading: false });
     }

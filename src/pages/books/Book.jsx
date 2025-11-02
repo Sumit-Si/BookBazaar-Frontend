@@ -2,9 +2,6 @@ import { useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import useBookStore from "../../store/useBookStore.js";
 import Container from "../../components/Container/Container.jsx";
-import { ArrowLeftIcon } from "lucide-react";
-import { useState } from "react";
-import { create } from "zustand";
 import useReviewStore from "../../store/useReviewStore.js";
 import z from "zod";
 import { useForm } from "react-hook-form";
@@ -12,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import calculateRatingStats from "../../utils/CalculateRatingStats.js";
 import useCartStore from "../../store/useCartStore.js";
-import { ArrowRightIcon } from "lucide-react";
+import BackBtnWithTitle from "../../components/BackBtnWithTitle.jsx";
 
 const reviewSchema = z.object({
   rating: z.coerce.number().min(1, "Please select a rating between 1 and 5."),
@@ -23,7 +20,6 @@ const reviewSchema = z.object({
 });
 
 const Book = () => {
-  const navigate = useNavigate();
   const { bookId } = useParams();
   console.log("id", bookId);
 
@@ -101,15 +97,7 @@ const Book = () => {
     <Container>
       <div className="min-h-screen bg-base-100 text-base-content">
         {/* BACK BUTTON */}
-        <div className="px-6 py-10">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="bg-base-300 py-2 px-4 rounded-full shadow-md shadow-secondary/20 flex items-center gap-0.5 hover:text-secondary hover:shadow-lg transition duration-200 btn btn-outline btn-secondary"
-          >
-            <ArrowLeftIcon className="h-4 w-4" /> Back
-          </button>
-        </div>
+        <BackBtnWithTitle title={"Book Details"} />
 
         {/* MAIN GRID */}
         <div className="px-6 pb-20 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
